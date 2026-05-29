@@ -1,7 +1,7 @@
 .PHONY: venv install fmt fmt-check lint lint-fix test check clean
 
 venv:
-	@uv venv --python=3.14
+	@uv venv --python=3.13
 
 install:
 	@uv pip install -e '.'
