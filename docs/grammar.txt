@@ -1,0 +1,155 @@
+Program         → StatementList
+
+StatementList   → Statement StatementList
+                | ε
+
+Statement       → VarDecl
+                | IDENTIFIER StatementIdTail
+                | IfStmt
+                | ForStmt
+                | FuncDecl
+                | RetStmt
+                | PutsStmt
+                | Block
+
+# =====================================================
+# DECLARAÇÃO DE VARIÁVEIS
+# =====================================================
+
+VarDecl         → VAR IDENTIFIER Type VarInit SEMICOLON
+
+Type            → INT_TYPE
+                | FLT_TYPE
+                | CHR_TYPE
+                | BOOL_TYPE
+
+VarInit         → ASSIGN Expr
+                | ε
+
+# =====================================================
+# COMANDOS INICIADOS COM IDENTIFIER
+# =====================================================
+
+StatementIdTail → ASSIGN Expr SEMICOLON
+                | LPAREN ArgList RPAREN SEMICOLON
+
+# =====================================================
+# IF / ELSE
+# =====================================================
+
+IfStmt          → IF LPAREN Expr RPAREN Block ElsePart
+
+ElsePart        → ELSE Block
+                | ε
+
+# =====================================================
+# FOR
+# =====================================================
+
+ForStmt         → FOR LPAREN ForInit SEMICOLON Expr SEMICOLON ForStep RPAREN Block
+
+ForInit         → IDENTIFIER ASSIGN Expr
+                | ε
+
+ForStep         → IDENTIFIER ASSIGN Expr
+                | ε
+
+# =====================================================
+# FUNÇÕES
+# =====================================================
+
+FuncDecl        → FUCK IDENTIFIER LPAREN ParamList RPAREN Block
+
+ParamList       → Param ParamRest
+                | ε
+
+Param           → IDENTIFIER Type
+
+ParamRest       → SEMICOLON Param ParamRest
+                | ε
+
+# =====================================================
+# RETORNO
+# =====================================================
+
+RetStmt         → RET Expr SEMICOLON
+
+# =====================================================
+# PUTS
+# =====================================================
+
+PutsStmt        → PUTS LPAREN Expr RPAREN SEMICOLON
+
+# =====================================================
+# BLOCO
+# =====================================================
+
+Block           → LBRACE StatementList RBRACE
+
+# =====================================================
+# EXPRESSÕES
+# =====================================================
+
+Expr            → OrExpr
+
+OrExpr          → AndExpr OrRest
+
+OrRest          → OR AndExpr OrRest
+                | ε
+
+AndExpr         → RelExpr AndRest
+
+AndRest         → AND RelExpr AndRest
+                | ε
+
+RelExpr         → AddExpr RelRest
+
+RelRest         → RelOp AddExpr
+                | ε
+
+RelOp           → LT
+                | GT
+                | LE
+                | GE
+                | EQ
+                | NQ
+
+AddExpr         → MulExpr AddRest
+
+AddRest         → PLUS MulExpr AddRest
+                | MINUS MulExpr AddRest
+                | ε
+
+MulExpr         → UnaryExpr MulRest
+
+MulRest         → ASTERISK UnaryExpr MulRest
+                | SLASH UnaryExpr MulRest
+                | ε
+
+UnaryExpr       → MINUS UnaryExpr
+                | Primary
+
+# =====================================================
+# PRIMÁRIOS
+# =====================================================
+
+Primary         → INT
+                | FLT
+                | CHR
+                | TRUE
+                | FALSE
+                | IDENTIFIER PrimaryTail
+                | LPAREN Expr RPAREN
+
+PrimaryTail     → LPAREN ArgList RPAREN
+                | ε
+
+# =====================================================
+# ARGUMENTOS
+# =====================================================
+
+ArgList         → Expr ArgRest
+                | ε
+
+ArgRest         → SEMICOLON Expr ArgRest
+                | ε
