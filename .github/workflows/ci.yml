@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "mkdocs.yml"
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "mkdocs.yml"
+
+# required for publication of test results
+permissions:
+  contents: read
+  issues: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  lint-and-test:
+    name: Run linter and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv sync
+      - name: Run linter/formatter
+        run: uv run ruff check .
+      - name: Run tests
+        run: uv run pytest -v --junitxml=test-result.xml
+      - name: Publish junit results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: test-result.xml
+          check_name: Test Result
