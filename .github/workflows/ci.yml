@@ -30,18 +30,18 @@ jobs:
     name: Run linter and tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+      - uses: astral-sh/setup-uv@v8.0.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-      - uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
       - name: Install dependencies
         run: uv sync
       - name: Run linter/formatter
-        run: uv run ruff check .
+        run: uv run ruff check src tests
       - name: Run tests
         run: uv run pytest -v --junitxml=test-result.xml
       - name: Publish junit results
