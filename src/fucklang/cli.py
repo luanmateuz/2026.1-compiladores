@@ -1,6 +1,7 @@
 import argparse
 
 from fucklang.lexer import Lexer
+from fucklang.parser import Parser
 
 
 def flag_lexer(code: str) -> None:
@@ -13,12 +14,22 @@ def flag_lexer(code: str) -> None:
         print(err)
 
 
+def flag_parser(code: str) -> None:
+    try:
+        tokens = Lexer(code).tokenize()
+        ast = Parser(tokens).parse()
+        print(ast)
+    except SyntaxError as err:
+        print(err)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="fucklang", description="fucklang cli"
     )
     parser.add_argument("filename", help="<filename.fk>")
     parser.add_argument("-l", "--lexer", action="store_true")
+    parser.add_argument("-p", "--parser", action="store_true")
 
     args = parser.parse_args()
 
@@ -33,7 +44,9 @@ def main() -> None:
 
         if args.lexer:
             flag_lexer(code)
-            return
+
+        if args.parser:
+            flag_parser(code)
 
 
 if __name__ == "__main__":
