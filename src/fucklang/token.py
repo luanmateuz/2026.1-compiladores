@@ -18,6 +18,7 @@ class TokenType(Enum):
     FLT_TYPE = auto()
     CHR_TYPE = auto()
     STR_TYPE = auto()
+    BOO_TYPE = auto()
 
     # identifier and literals
     IDENTIFIER = auto()
@@ -25,6 +26,7 @@ class TokenType(Enum):
     FLT = auto()
     CHR = auto()
     STR = auto()
+    BOO = auto()
 
     # operators
     ASSIGN = auto()
@@ -74,6 +76,7 @@ KEYWORDS: dict[str, TokenType] = {
     "flt": TokenType.FLT_TYPE,
     "chr": TokenType.CHR_TYPE,
     "str": TokenType.STR_TYPE,
+    "boo": TokenType.BOO_TYPE,
 }
 
 

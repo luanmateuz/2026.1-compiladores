@@ -64,6 +64,18 @@ class String(Expr):
 
 
 @dataclass
+class Boolean(Expr):
+    value: bool
+    line: int
+
+    def __post_init__(self) -> None:
+        assert isinstance(self.value, bool), self.value
+
+    def __repr__(self) -> str:
+        return f"Boolean[{self.value}]"
+
+
+@dataclass
 class UnaryOp(Expr):
     op: Token
     operand: Expr

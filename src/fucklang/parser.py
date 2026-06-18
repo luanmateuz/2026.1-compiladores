@@ -1,6 +1,7 @@
 from fucklang.node import (
     AssignStmt,
     BinaryOp,
+    Boolean,
     Character,
     ConstStmt,
     Float,
@@ -71,7 +72,7 @@ class Parser:
 
     def primary(self):
         """
-        <primary> ::= <int> | <flt> | <chr> | <str>
+        <primary> ::= <int> | <flt> | <chr> | <str> | <boo>
                                             | <identifier>
                                             | '(' expr ')'
         """
@@ -91,6 +92,10 @@ class Parser:
             return String(
                 str(self.previous_token().lexeme), self.previous_token().line
             )
+        elif self.match(TokenType.TRUE):
+            return Boolean(True, self.previous_token().line)
+        elif self.match(TokenType.FALSE):
+            return Boolean(False, self.previous_token().line)
         elif self.match(TokenType.LPAREN):
             expr = self.expr()
             if not self.match(TokenType.RPAREN):
@@ -225,13 +230,14 @@ class Parser:
 
     def parse_type(self) -> Token:
         """
-        <type> ::= int_type | flt_type | chr_type | str_type
+        <type> ::= int_type | flt_type | chr_type | str_type | boo_type
         """
         if (
             self.match(TokenType.INT_TYPE)
             or self.match(TokenType.FLT_TYPE)
             or self.match(TokenType.CHR_TYPE)
             or self.match(TokenType.STR_TYPE)
+            or self.match(TokenType.BOO_TYPE)
         ):
             return self.previous_token()
         raise SyntaxError(f"Line {self.peek().line}: Expected a valid type.")
