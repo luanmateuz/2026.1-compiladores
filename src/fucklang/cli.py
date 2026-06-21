@@ -2,6 +2,7 @@ import argparse
 
 from fucklang.lexer import Lexer
 from fucklang.parser import Parser
+from fucklang.symbol import SemanticAnalyzer
 
 
 def flag_lexer(code: str) -> None:
@@ -23,6 +24,17 @@ def flag_parser(code: str) -> None:
         print(err)
 
 
+def flag_symbol_table(code: str) -> None:
+    try:
+        tokens = Lexer(code).tokenize()
+        ast = Parser(tokens).parse()
+        symbol = SemanticAnalyzer().analyze(ast)
+        for idx in symbol.symbols:
+            print(f"{idx}: {symbol.symbols[idx]}")
+    except SyntaxError as err:
+        print(err)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="fucklang", description="fucklang cli"
@@ -30,6 +42,7 @@ def main() -> None:
     parser.add_argument("filename", help="<filename.fk>")
     parser.add_argument("-l", "--lexer", action="store_true")
     parser.add_argument("-p", "--parser", action="store_true")
+    parser.add_argument("-s", "--symbol", action="store_true")
 
     args = parser.parse_args()
 
@@ -47,6 +60,9 @@ def main() -> None:
 
         if args.parser:
             flag_parser(code)
+
+        if args.symbol:
+            flag_symbol_table(code)
 
 
 if __name__ == "__main__":
