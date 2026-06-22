@@ -1,7 +1,6 @@
 from fucklang.codegen import CodeGenerator
 from fucklang.lexer import Lexer
-from fucklang.node import Integer
-from fucklang.node import Boolean
+from fucklang.node import Boolean, Integer
 from fucklang.parser import Parser
 from fucklang.symbol import SemanticAnalyzer
 
