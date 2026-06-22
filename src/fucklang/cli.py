@@ -1,9 +1,12 @@
 import argparse
+from importlib import metadata
 
 from fucklang.codegen import CodeGenerator
 from fucklang.lexer import Lexer
 from fucklang.parser import Parser
 from fucklang.symbol import SemanticAnalyzer
+
+PKG_VERSION = metadata.version("fucklang")
 
 
 def flag_lexer(code: str) -> None:
@@ -52,6 +55,9 @@ def main() -> None:
         prog="fucklang", description="fucklang cli"
     )
     parser.add_argument("filename", help="<filename.fk>")
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"%(prog)s {PKG_VERSION}"
+    )
     parser.add_argument("-l", "--lexer", action="store_true")
     parser.add_argument("-p", "--parser", action="store_true")
     parser.add_argument("-s", "--symbol", action="store_true")
