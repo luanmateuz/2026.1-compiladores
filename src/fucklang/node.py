@@ -168,19 +168,21 @@ class Identifier(Expr):
 @dataclass
 class ConstStmt(Stmt):
     name: Token
-    type: Token
+    # type: Token
+    type: TokenType
     value: Expr
     line: int
 
     def __post_init__(self) -> None:
         assert isinstance(self.name, Token)
-        assert isinstance(self.type, Token)
+        # assert isinstance(self.type, Token)
         assert isinstance(self.value, Expr)
 
     def __repr__(self) -> str:
         return (
             f"ConstStmt({self.name.lexeme!r}, "
-            f"{self.type.lexeme!r}, {self.value})"
+            # f"{self.type.lexeme!r}, {self.value})"
+            f"{self.type}, {self.value})"
         )
 
 

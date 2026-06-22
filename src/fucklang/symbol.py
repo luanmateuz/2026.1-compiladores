@@ -20,14 +20,15 @@ from fucklang.node import (
     UnaryOp,
     VarStmt,
 )
+from fucklang.token import TokenType
 
 
 @dataclass
 class Symbol:
     idx: str
-    type: str
-    value: str
+    type: TokenType
     offset: int
+    mutable: bool
 
 
 @dataclass
@@ -35,11 +36,11 @@ class SymbolTable:
     symbols: dict[str, Symbol] = field(default_factory=dict)
     curr: int = 0
 
-    def declare(self, name, type):
+    def declare(self, name, type, mutable=True):
         if name in self.symbols:
             raise SyntaxError(f"{name} is already declared.")
 
-        symbol = Symbol(name, type, "value", self.curr)
+        symbol = Symbol(name, type, self.curr, mutable)
         self.symbols[name] = symbol
         self.curr += 1
 
@@ -122,15 +123,22 @@ class SemanticAnalyzer:
 
     def const_stmt(self, node: ConstStmt):
         self.visit(node.value)
-        self.symbol_table.declare(node.name.lexeme, node.type.type.name)
+        self.symbol_table.declare(node.name.lexeme, node.type, mutable=False)
 
     def var_stmt(self, node: VarStmt):
         self.visit(node.value)
-        self.symbol_table.declare(node.name.lexeme, node.type.name)
+
+        self.symbol_table.declare(node.name.lexeme, node.type)
 
     def assign_stmt(self, node: AssignStmt):
         self.visit(node.right)
-        self.symbol_table.resolve(node.left.lexeme)
+        symbol = self.symbol_table.resolve(node.left.lexeme)
+
+        if not symbol.mutable:
+            raise SyntaxError(
+                f"[Line {node.line}] Error:"
+                f"Cannot assign to const {node.left.lexeme}"
+            )
 
     def puts_stmt(self, node: PutsStmt):
         self.visit(node.expr)

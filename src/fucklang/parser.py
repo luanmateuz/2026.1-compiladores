@@ -277,7 +277,6 @@ class Parser:
             # ex:
             # var i int := 0;
             var = self.var_stmt()
-            print(var)
         else:
             var = None
             self.expected(TokenType.SEMICOLON)
@@ -339,7 +338,8 @@ class Parser:
         if not self.match(TokenType.IDENTIFIER):
             raise SyntaxError("Error: expected const name.")
         name = self.previous_token()
-        const_type = self.parse_type()
+        # const_type = self.parse_type()
+        const_type = self.parse_type().type
 
         if not self.match(TokenType.ASSIGN):
             raise SyntaxError(
