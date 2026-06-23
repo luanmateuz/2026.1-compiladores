@@ -25,10 +25,12 @@ theme:
         name: Switch to light mode
   features:
     - toc.integrate
+    - content.code.copy
 nav:
   - grammar.md
   - syntax.md
 markdown_extensions:
+  - admonition
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
