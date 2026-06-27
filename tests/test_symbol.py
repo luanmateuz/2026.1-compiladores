@@ -50,13 +50,70 @@ def test_symbol_const():
     assert symbol.mutable is False
 
 
-def test_symbol_primary_integer() -> None:
+def test_symbol_const_decl() -> None:
+    tokens = Lexer("const PI flt := 3.141596;").tokenize()
+    ast = Parser(tokens).parse()
+    symbol = SemanticAnalyzer().analyze(ast)
+
+    expected = SymbolTable()
+    expected.declare("PI", TokenType.FLT_TYPE, False)
+    expected.curr = 1
+
+    assert symbol == expected
+
+
+def test_symbol_var_decl_integer() -> None:
     tokens = Lexer("var x int := 10;").tokenize()
     ast = Parser(tokens).parse()
     symbol = SemanticAnalyzer().analyze(ast)
 
     expected = SymbolTable()
     expected.declare("x", TokenType.INT_TYPE, True)
+    expected.curr = 1
+
+    assert symbol == expected
+
+
+def test_symbol_const_decl_and_assign_err() -> None:
+    tokens = Lexer("const PI flt := 3.14; PI := 3.0;").tokenize()
+    ast = Parser(tokens).parse()
+
+    with pytest.raises(SyntaxError):
+        _ = SemanticAnalyzer().analyze(ast)
+
+
+def test_symbol_var_decl_integer_assing_float_err() -> None:
+    tokens = Lexer("var x int := 10.0;").tokenize()
+    ast = Parser(tokens).parse()
+
+    with pytest.raises(SyntaxError):
+        _ = SemanticAnalyzer().analyze(ast)
+
+
+def test_symbol_var_decl_float_assing_boolean_err() -> None:
+    tokens = Lexer("var x flt := true;").tokenize()
+    ast = Parser(tokens).parse()
+
+    with pytest.raises(SyntaxError):
+        _ = SemanticAnalyzer().analyze(ast)
+
+
+def test_symbol_assing_binary_op_sum_booleans_err() -> None:
+    tokens = Lexer("var x boo := true; x := true + false;").tokenize()
+    ast = Parser(tokens).parse()
+
+    with pytest.raises(SyntaxError):
+        _ = SemanticAnalyzer().analyze(ast)
+
+
+def test_symbol_assing_binary_op_booleans() -> None:
+    tokens = Lexer("var x boo := true; x := !true;").tokenize()
+    ast = Parser(tokens).parse()
+    symbol = SemanticAnalyzer().analyze(ast)
+    print(symbol)
+
+    expected = SymbolTable()
+    expected.declare("x", TokenType.BOO_TYPE, True)
     expected.curr = 1
 
     assert symbol == expected
