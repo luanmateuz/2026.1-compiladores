@@ -1,3 +1,4 @@
+from fucklang.node import FuncParam
 import pytest
 
 from fucklang.lexer import Lexer
@@ -110,10 +111,97 @@ def test_symbol_assing_binary_op_booleans() -> None:
     tokens = Lexer("var x boo := true; x := !true;").tokenize()
     ast = Parser(tokens).parse()
     symbol = SemanticAnalyzer().analyze(ast)
-    print(symbol)
 
     expected = SymbolTable()
     expected.declare("x", TokenType.BOO_TYPE, True)
     expected.curr = 1
 
     assert symbol == expected
+
+
+def test_symbol_func_declaration_void_no_params() -> None:
+    input = """
+    fuck hello() void {
+        puts("h");
+    }
+    """
+    tokens = Lexer(input).tokenize()
+    ast = Parser(tokens).parse()
+    symbol = SemanticAnalyzer().analyze(ast)
+
+    expected = SymbolTable()
+    expected.declare(
+        name="hello",
+        type=TokenType.VOID_TYPE,
+        mutable=False,
+        is_func=True,
+        params=[],
+    )
+    expected.curr = 1
+
+    assert symbol == expected
+
+
+def test_symbol_func_declaration_and_call_valid() -> None:
+    code = """
+    fuck sum(a int, b int) int {
+        ret a + b;
+    }
+    var result int := sum(10, 5);
+    """
+    tokens = Lexer(code).tokenize()
+    ast = Parser(tokens).parse()
+    symbol_table = SemanticAnalyzer().analyze(ast)
+
+    expected = SymbolTable()
+    expected.declare(
+        name="sum",
+        type=TokenType.INT_TYPE,
+        mutable=False,
+        is_func=True,
+        params=[
+            FuncParam("a", TokenType.INT_TYPE),
+            FuncParam("b", TokenType.INT_TYPE),
+        ],
+    )
+
+    expected.declare("result", TokenType.INT_TYPE)
+
+    assert symbol_table == expected
+
+
+def test_symbol_func_wrong_argument_count_invalid() -> None:
+    code = """
+    fuck multiply(a int, b int) int {
+        ret a * b;
+    }
+    var x int := multiply(10);
+    """
+    tokens = Lexer(code).tokenize()
+    ast = Parser(tokens).parse()
+
+    with pytest.raises(SyntaxError, match="expected 2 arguments, got 1"):
+        SemanticAnalyzer().analyze(ast)
+
+
+def test_symbol_func_call_undeclared_function_invalid() -> None:
+    code = """
+    var x int := ghost_function();
+    """
+    tokens = Lexer(code).tokenize()
+    ast = Parser(tokens).parse()
+
+    with pytest.raises(SyntaxError, match="'ghost_function' is not declared"):
+        SemanticAnalyzer().analyze(ast)
+
+
+def test_symbol_func_all_variable_as_function_invalid() -> None:
+    code = """
+    var x int := 10;
+    x();
+    """
+    tokens = Lexer(code).tokenize()
+    ast = Parser(tokens).parse()
+
+    with pytest.raises(SyntaxError, match="is not a function"):
+        SemanticAnalyzer().analyze(ast)

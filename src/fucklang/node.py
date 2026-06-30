@@ -273,3 +273,32 @@ class ForStmt(Stmt):
             f"ForStmt(init={self.init}, condition={self.condition}, "
             f"for_step={self.for_step}, for_stmts={self.for_stmts})"
         )
+
+
+@dataclass
+class FuncParam(Node):
+    name: str
+    param_type: TokenType
+
+
+@dataclass
+class FuncDecl(Stmt):
+    name: str
+    params: list[FuncParam]
+    func_type: TokenType
+    body: list[Stmt]
+    line: int
+
+
+@dataclass
+class RetStmt(Stmt):
+    value: Expr
+    line: int
+
+
+@dataclass
+class FuncCall(Expr):
+    name: str
+    arguments: list[Expr]
+    line: int
+    type: TokenType | None = None

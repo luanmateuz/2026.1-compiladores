@@ -19,6 +19,7 @@ class TokenType(Enum):
     CHR_TYPE = auto()
     STR_TYPE = auto()
     BOO_TYPE = auto()
+    VOID_TYPE = auto()
 
     # identifier and literals
     IDENTIFIER = auto()
@@ -72,6 +73,7 @@ KEYWORDS: dict[str, TokenType] = {
     "puts": TokenType.PUTS,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
+    "void": TokenType.VOID_TYPE,
     "int": TokenType.INT_TYPE,
     "flt": TokenType.FLT_TYPE,
     "chr": TokenType.CHR_TYPE,

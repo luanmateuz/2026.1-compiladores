@@ -2,10 +2,15 @@ from fucklang.lexer import Lexer
 from fucklang.node import (
     BinaryOp,
     Float,
+    FuncCall,
+    FuncDecl,
+    FuncParam,
     Identifier,
     IfStmt,
     Integer,
     PutsStmt,
+    RetStmt,
+    String,
     VarStmt,
 )
 from fucklang.parser import Parser
@@ -104,5 +109,99 @@ if (z > 5) {
 
     tokens = Lexer(input).tokenize()
     ast = Parser(tokens).parse()
+
+    assert ast == expected
+
+
+def test_parser_fuck_declaration_without_params():
+    input = """fuck this_shit() void {
+    puts("x");            
+}
+
+this_shit();
+"""
+    tokens = Lexer(input).tokenize()
+    ast = Parser(tokens).parse()
+
+    expected = [
+        FuncDecl(
+            name="this_shit",
+            params=[],
+            func_type=TokenType.VOID_TYPE,
+            body=[PutsStmt(expr=String('"x"', 2), line=2)],
+            line=3,
+        ),
+        FuncCall(name="this_shit", arguments=[], line=5),
+    ]
+
+    assert ast == expected
+
+
+def test_parser_fuck_declaration_with_params():
+    input = """fuck sum(a int, b int) int {
+    ret a + b;
+}
+
+var restult int := sum(1,2);
+"""
+    tokens = Lexer(input).tokenize()
+    ast = Parser(tokens).parse()
+
+    expected = [
+        FuncDecl(
+            name="sum",
+            params=[
+                FuncParam("a", TokenType.INT_TYPE),
+                FuncParam("b", TokenType.INT_TYPE),
+            ],
+            func_type=TokenType.INT_TYPE,
+            body=[
+                RetStmt(
+                    value=BinaryOp(
+                        op=Token(TokenType.PLUS, "+", 2, 11),
+                        left=Identifier("a", 2),
+                        right=Identifier("b", 2),
+                        line=2,
+                    ),
+                    line=2,
+                )
+            ],
+            line=3,
+        ),
+        VarStmt(
+            name=Token(TokenType.IDENTIFIER, "restult", 5, 5),
+            type=TokenType.INT_TYPE,
+            value=FuncCall(
+                name="sum",
+                arguments=[Integer(1, 5), Integer(2, 5)],
+                line=5,
+            ),
+            line=5,
+        ),
+    ]
+
+    assert ast == expected
+
+
+def test_parser_fuck_declaration_with_params_ret_void():
+    input = """fuck print_int(a int) void {
+    puts(a);
+}
+
+print_int(9);
+"""
+    tokens = Lexer(input).tokenize()
+    ast = Parser(tokens).parse()
+
+    expected = [
+        FuncDecl(
+            name="print_int",
+            params=[FuncParam("a", TokenType.INT_TYPE)],
+            func_type=TokenType.VOID_TYPE,
+            body=[PutsStmt(expr=Identifier("a", 2), line=2)],
+            line=3,
+        ),
+        FuncCall(name="print_int", arguments=[Integer(9, 5)], line=5),
+    ]
 
     assert ast == expected

@@ -8,6 +8,8 @@ from fucklang.node import (
     ConstStmt,
     Float,
     ForStmt,
+    FuncCall,
+    FuncDecl,
     Identifier,
     IfStmt,
     Integer,
@@ -15,6 +17,7 @@ from fucklang.node import (
     LogicalOr,
     ParenGroup,
     PutsStmt,
+    RetStmt,
     Stmts,
     String,
     UnaryOp,
@@ -29,34 +32,47 @@ class Symbol:
     type: TokenType
     offset: int
     mutable: bool
+    is_func: bool = False
+    params: list = field(default_factory=list)
+
+    def __repr__(self) -> str:
+        return (
+            f"Symbol(idx={self.idx}, type={self.type}, "
+            f"offset={self.offset}, mutable={self.mutable}, "
+            f"is_func={self.is_func}, params={self.params})"
+        )
 
 
 @dataclass
 class SymbolTable:
+    parent: "SymbolTable" = None
     symbols: dict[str, Symbol] = field(default_factory=dict)
     curr: int = 0
 
-    def declare(self, name, type, mutable=True):
+    def declare(self, name, type, mutable=True, is_func=False, params=None):
         if name in self.symbols:
-            raise SyntaxError(f"{name} is already declared.")
+            raise SyntaxError(f"{name} is already declared in this scope.")
 
-        symbol = Symbol(name, type, self.curr, mutable)
-
+        symbol = Symbol(name, type, self.curr, mutable, is_func, params or [])
         self.symbols[name] = symbol
         self.curr += 1
 
         return symbol
 
     def resolve(self, name):
-        if name not in self.symbols:
-            raise SyntaxError(f"{name} is not declared.")
+        if name in self.symbols:
+            return self.symbols[name]
 
-        return self.symbols[name]
+        if self.parent:
+            return self.parent.resolve(name)
+
+        raise SyntaxError(f"'{name}' is not declared.")
 
 
 @dataclass
 class SemanticAnalyzer:
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
+    cur_func_ret_type: TokenType | None = None
 
     def analyze(self, ast):
         for node in ast:
@@ -118,6 +134,15 @@ class SemanticAnalyzer:
 
         elif isinstance(node, ForStmt):
             return self.for_stmt(node)
+
+        elif isinstance(node, FuncDecl):
+            return self.func_decl(node)
+
+        elif isinstance(node, FuncCall):
+            return self.func_call(node)
+
+        elif isinstance(node, RetStmt):
+            return self.ret_stmt(node)
 
         raise SyntaxError(f"Visit {node} not implemented.")
 
@@ -320,3 +345,75 @@ class SemanticAnalyzer:
                 self.visit(stmt)
         else:
             self.visit(node.for_stmts)
+
+    def func_decl(self, node: FuncDecl):
+        func_ret_type = node.func_type
+
+        self.symbol_table.declare(
+            node.name,
+            func_ret_type,
+            mutable=False,
+            is_func=True,
+            params=node.params,
+        )
+
+        previous_scope = self.symbol_table
+        self.symbol_table = SymbolTable(parent=previous_scope)
+
+        old_ret_type = self.cur_func_ret_type
+        self.cur_func_ret_type = func_ret_type
+
+        for param in node.params:
+            self.symbol_table.declare(
+                param.name, param.param_type, mutable=True
+            )
+
+        for stmt in node.body:
+            self.visit(stmt)
+
+        self.cur_func_ret_type = old_ret_type
+        self.symbol_table = previous_scope
+
+    def func_call(self, node: FuncCall):
+        symbol = self.symbol_table.resolve(node.name)
+
+        if not symbol.is_func:
+            raise SyntaxError(
+                f"[Line {node.line}] Error: '{node.name}' is not a function."
+            )
+
+        if len(node.arguments) != len(symbol.params):
+            raise SyntaxError(
+                f"[Line {node.line}] Error: Function '{node.name}' expected "
+                f"{len(symbol.params)} arguments, got {len(node.arguments)}."
+            )
+
+        for arg, param in zip(node.arguments, symbol.params):
+            arg_type = self.visit(arg)
+            expected_type = param.param_type
+
+            if arg_type != expected_type:
+                raise SyntaxError(
+                    f"[Line {node.line}] Error: Invalid argument "
+                    f"type for '{node.name}'. "
+                    f"Expected {expected_type}, got {arg_type}."
+                )
+
+        node.type = symbol.type
+        return symbol.type
+
+    def ret_stmt(self, node: RetStmt):
+        if self.cur_func_ret_type is None:
+            raise SyntaxError(
+                f"[Line {node.line}] Error: 'ret' statement outside function."
+            )
+
+        ret_value_type = (
+            self.visit(node.value) if node.value else TokenType.VOID_TYPE
+        )
+
+        if ret_value_type != self.cur_func_ret_type:
+            raise SyntaxError(
+                f"[Line {node.line}] Error: Return type mismatch. "
+                f"Expected {self.cur_func_ret_type}, got {ret_value_type}."
+            )

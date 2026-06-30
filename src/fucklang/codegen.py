@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 
 from fucklang.node import (
     AssignStmt,
@@ -8,6 +9,8 @@ from fucklang.node import (
     ConstStmt,
     Float,
     ForStmt,
+    FuncCall,
+    FuncDecl,
     Identifier,
     IfStmt,
     Integer,
@@ -15,6 +18,7 @@ from fucklang.node import (
     LogicalOr,
     ParenGroup,
     PutsStmt,
+    RetStmt,
     Stmts,
     String,
     UnaryOp,
@@ -25,10 +29,61 @@ from fucklang.token import TokenType
 
 
 @dataclass
+class FrameContext:
+    parent: Optional["FrameContext"] = None
+    n_params: int = 0
+    locals: dict[str, int] = field(default_factory=dict)
+    parameters: dict[str, int] = field(default_factory=dict)
+    local_offset: int = field(init=False)
+
+    def __post_init__(self):
+        if self.parent:
+            self.local_offset = self.parent.local_offset
+        else:
+            self.local_offset = 1
+
+    def add_variable(self, name: str) -> int:
+        self.locals[name] = self.local_offset
+        allocated = self.local_offset
+        self.local_offset += 1
+
+        p = self.parent
+        while p:
+            p.local_offset = self.local_offset
+            p = p.parent
+
+        return allocated
+
+    def add_parameter(self, name: str, index: int) -> int:
+        offset = -(self.n_params - index + 1)
+        self.parameters[name] = offset
+        return offset
+
+    def get_offset(self, name: str) -> int | None:
+        if name in self.locals:
+            return self.locals[name]
+
+        if name in self.parameters:
+            return self.parameters[name]
+
+        if self.parent:
+            return self.parent.get_offset(name)
+
+        return None
+
+    def get_return_offset(self) -> int:
+        p = self
+        while p and p.parent is not None:
+            p = p.parent
+        return -(p.n_params + 2) if p else -2
+
+
+@dataclass
 class CodeGenerator:
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
     sam_code: list[str] = field(default_factory=list)
     label_counter: int = 0
+    cur_frame: FrameContext | None = None
 
     def build(self, ast):
         if self.symbol_table.curr > 0:
@@ -82,34 +137,105 @@ class CodeGenerator:
             self.for_stmt(node)
         elif isinstance(node, PutsStmt):
             self.puts(node)
+        elif isinstance(node, FuncDecl):
+            self.func_decl(node)
+        elif isinstance(node, FuncCall):
+            self.func_call(node)
+        elif isinstance(node, RetStmt):
+            self.ret_stmt(node)
 
     def new_label(self, name: str) -> str:
-        label_name = f"LABEL_{name}_{self.label_counter}"
+        label_name = f"{name}_{self.label_counter}".lower()
         self.label_counter += 1
 
         return label_name
 
+    def get_var_offset(self, name: str) -> int:
+        if self.cur_frame:
+            offset = self.cur_frame.get_offset(name)
+            if offset is not None:
+                return offset
+
+        return self.symbol_table.resolve(name).offset
+
+    def func_decl(self, node: FuncDecl):
+        label_end_func = self.new_label(f"end_func_{node.name}")
+        self.sam_code.append(f"JUMP {label_end_func}")
+
+        self.sam_code.append(f"{node.name}:")
+        self.sam_code.append("LINK")
+
+        old_frame = self.cur_frame
+        self.cur_frame = FrameContext(parent=None, n_params=len(node.params))
+
+        for i, param in enumerate(node.params):
+            self.cur_frame.add_parameter(param.name, i)
+
+        for stmt in node.body:
+            self.visit(stmt)
+
+        self.sam_code.append("UNLINK")
+        self.sam_code.append("RST")
+
+        self.cur_frame = old_frame
+        self.sam_code.append(f"{label_end_func}:")
+
+    def func_call(self, node: FuncCall):
+        symbol = self.symbol_table.resolve(node.name)
+
+        if symbol.type != TokenType.VOID_TYPE:
+            self.sam_code.append("PUSHIMM 0")
+
+        for arg in node.arguments:
+            self.visit(arg)
+
+        self.sam_code.append(f"JSR {node.name}")
+        n_args = len(node.arguments)
+        if n_args > 0:
+            self.sam_code.append(f"ADDSP -{n_args}")
+
+    def ret_stmt(self, node: RetStmt):
+        if node.value:
+            self.visit(node.value)
+            ret_offset = self.cur_frame.get_return_offset()
+            self.sam_code.append(f"STOREOFF {ret_offset}")
+
+        self.sam_code.append("UNLINK")
+        self.sam_code.append("RST")
+
     def const(self, node: ConstStmt):
-        self.visit(node.value)
-        symbol = self.symbol_table.resolve(node.name.lexeme)
-        self.sam_code.append(f"STOREOFF {symbol.offset}")
+        name = node.name.lexeme
+        if self.cur_frame:
+            offset = self.cur_frame.add_variable(name)
+            self.sam_code.append("ADDSP 1")
+            self.visit(node.value)
+            self.sam_code.append(f"STOREOFF {offset}")
+        else:
+            self.visit(node.value)
+            offset = self.symbol_table.resolve(name).offset
+            self.sam_code.append(f"STOREOFF {offset}")
 
     def var(self, node: VarStmt):
-        self.visit(node.value)
-        symbol = self.symbol_table.resolve(node.name.lexeme)
-        self.sam_code.append(f"STOREOFF {symbol.offset}")
+        name = node.name.lexeme
+        if self.cur_frame:
+            offset = self.cur_frame.add_variable(name)
+            self.sam_code.append("ADDSP 1")
+            self.visit(node.value)
+            self.sam_code.append(f"STOREOFF {offset}")
+        else:
+            self.visit(node.value)
+            offset = self.symbol_table.resolve(name).offset
+            self.sam_code.append(f"STOREOFF {offset}")
 
     def assign(self, node: AssignStmt):
         self.visit(node.right)
-        symbol = self.symbol_table.resolve(node.left.lexeme)
+        offset = self.get_var_offset(node.left.lexeme)
 
-        self.sam_code.append(f"STOREOFF {symbol.offset}")
+        self.sam_code.append(f"STOREOFF {offset}")
 
     def identifier(self, node: Identifier):
-        # self.sam_code.append(f"PUSHOFF {node.name}")
-        self.sam_code.append(
-            f"PUSHOFF {self.symbol_table.symbols[node.name].offset}"
-        )
+        offset = self.get_var_offset(node.name)
+        self.sam_code.append(f"PUSHOFF {offset}")
 
     def integer(self, node: Integer):
         self.sam_code.append(f"PUSHIMM {node.value} // integer")
@@ -191,12 +317,15 @@ class CodeGenerator:
             self.visit(s)
 
     def if_stmt(self, node: IfStmt):
+        old_frame = self.cur_frame
+        if self.cur_frame is not None:
+            self.cur_frame = FrameContext(parent=old_frame)
+
         label_else = self.new_label("ELSE")
         label_end = self.new_label("END")
 
         self.visit(node.boolean_expr)
         self.sam_code.append("ISNIL")
-
         self.sam_code.append(f"JUMPC {label_else}")
 
         if isinstance(node.if_stmts, list):
@@ -206,8 +335,8 @@ class CodeGenerator:
             self.visit(node.if_stmts)
 
         self.sam_code.append(f"JUMP {label_end}")
-
         self.sam_code.append(f"{label_else}:")
+
         if node.else_stmts:
             if isinstance(node.else_stmts, list):
                 for s in node.else_stmts:
@@ -216,8 +345,13 @@ class CodeGenerator:
                 self.visit(node.else_stmts)
 
         self.sam_code.append(f"{label_end}:")
+        self.cur_frame = old_frame
 
     def for_stmt(self, node: ForStmt):
+        old_frame = self.cur_frame
+        if self.cur_frame is not None:
+            self.cur_frame = FrameContext(parent=old_frame)
+
         label_for_start = self.new_label("FOR_START")
         label_for_end = self.new_label("FOR_END")
 
@@ -227,7 +361,6 @@ class CodeGenerator:
         self.sam_code.append(f"{label_for_start}:")
         self.visit(node.condition)
         self.sam_code.append("ISNIL")
-
         self.sam_code.append(f"JUMPC {label_for_end}")
 
         if isinstance(node.for_stmts, list):
@@ -241,12 +374,14 @@ class CodeGenerator:
 
         self.sam_code.append(f"JUMP {label_for_start}")
         self.sam_code.append(f"{label_for_end}:")
+        self.cur_frame = old_frame
 
     def puts(self, node: PutsStmt):
         if isinstance(node.expr, Identifier):
             name = node.expr.name
-            offset = self.symbol_table.symbols[name].offset
-            type = self.symbol_table.symbols[name].type
+            offset = self.get_var_offset(name)
+
+            type = self.symbol_table.resolve(name).type
 
             self.sam_code.append(f"PUSHOFF {offset}")
 

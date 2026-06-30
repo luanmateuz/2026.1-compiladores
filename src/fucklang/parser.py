@@ -6,6 +6,9 @@ from fucklang.node import (
     ConstStmt,
     Float,
     ForStmt,
+    FuncCall,
+    FuncDecl,
+    FuncParam,
     Identifier,
     IfStmt,
     Integer,
@@ -13,6 +16,7 @@ from fucklang.node import (
     LogicalOr,
     ParenGroup,
     PutsStmt,
+    RetStmt,
     Stmt,
     String,
     UnaryOp,
@@ -74,6 +78,7 @@ class Parser:
         """
         <primary> ::= <int> | <flt> | <chr> | <str> | <boo>
                                             | <identifier>
+                                            | <func_decl>
                                             | '(' expr ')'
         """
         if self.match(TokenType.INT):
@@ -107,6 +112,16 @@ class Parser:
             return ParenGroup(expr, self.previous_token().line)
         else:
             identifier = self.expected(TokenType.IDENTIFIER)
+
+            if self.match(TokenType.LPAREN):
+                args = []
+                if not self.is_next(TokenType.RPAREN):
+                    args.append(self.expr())
+                    while self.match(TokenType.COMMA):
+                        args.append(self.expr())
+                self.expected(TokenType.RPAREN)
+                return FuncCall(identifier.lexeme, args, identifier.line)
+
             return Identifier(identifier.lexeme, self.previous_token().line)
 
     def unary(self):
@@ -231,6 +246,7 @@ class Parser:
     def parse_type(self) -> Token:
         """
         <type> ::= int_type | flt_type | chr_type | str_type | boo_type
+                | void_type
         """
         if (
             self.match(TokenType.INT_TYPE)
@@ -238,6 +254,7 @@ class Parser:
             or self.match(TokenType.CHR_TYPE)
             or self.match(TokenType.STR_TYPE)
             or self.match(TokenType.BOO_TYPE)
+            or self.match(TokenType.VOID_TYPE)
         ):
             return self.previous_token()
         raise SyntaxError(f"Line {self.peek().line}: Expected a valid type.")
@@ -410,25 +427,85 @@ class Parser:
         self.expected(TokenType.SEMICOLON)
         return stmt
 
-    def stmt(
-        self,
-    ) -> IfStmt | ForStmt | PutsStmt | VarStmt | ConstStmt | AssignStmt:
+    def func_decl(self):
+        """
+        <func_def> ::= "fuck" IDENTIFIER "(" <params>? ")"
+                                    <type> "{" <stmts> "}"
+        """
+        self.expected(TokenType.FUCK)
+        name = self.expected(TokenType.IDENTIFIER)
+        self.expected(TokenType.LPAREN)
+
+        params = []
+        if not self.is_next(TokenType.RPAREN):
+            p_name = self.expected(TokenType.IDENTIFIER).lexeme
+            p_type = self.parse_type().type
+
+            params.append(FuncParam(p_name, p_type))
+
+            while self.match(TokenType.COMMA):
+                p_name = self.expected(TokenType.IDENTIFIER).lexeme
+                p_type = self.parse_type().type
+                params.append(FuncParam(p_name, p_type))
+
+        self.expected(TokenType.RPAREN)
+        ret_type = self.parse_type().type
+        self.expected(TokenType.LBRACE)
+        body = self.stmts()
+
+        return FuncDecl(
+            name.lexeme,
+            params,
+            ret_type,
+            body,
+            self.previous_token().line,
+        )
+
+    def ret_stmt(self):
+        """
+        <ret_stmt> ::= "ret" <expr> ";"
+        """
+        self.expected(TokenType.RET)
+        expr = self.expr()
+        self.expected(TokenType.SEMICOLON)
+
+        return RetStmt(expr, self.previous_token().line)
+
+    def stmt(self):
         if self.peek().type == TokenType.IF:
             return self.if_stmt()
         elif self.peek().type == TokenType.FOR:
             return self.for_stmt()
         elif self.peek().type == TokenType.PUTS:
             return self.puts_stmt()
-
-        else:
-            if self.peek().type == TokenType.VAR:
-                return self.var_stmt()
-            elif self.peek().type == TokenType.CONST:
-                return self.const_stmt()
-            elif self.peek().type == TokenType.IDENTIFIER:
+        elif self.peek().type == TokenType.VAR:
+            return self.var_stmt()
+        elif self.peek().type == TokenType.CONST:
+            return self.const_stmt()
+        elif self.peek().type == TokenType.FUCK:
+            return self.func_decl()
+        elif self.peek().type == TokenType.RET:
+            return self.ret_stmt()
+        elif self.peek().type == TokenType.IDENTIFIER:
+            if (
+                self.curr + 1 < len(self.tokens)
+                and self.tokens[self.curr + 1].type == TokenType.ASSIGN
+            ):
                 return self.assign_stmt()
+            elif (
+                self.curr + 1 < len(self.tokens)
+                and self.tokens[self.curr + 1].type == TokenType.LPAREN
+            ):
+                call_expr = self.expr()
+                self.expected(TokenType.SEMICOLON)
+                return call_expr
             else:
-                raise SyntaxError("Oh shit, :/")
+                raise SyntaxError(
+                    f"[Line {self.peek().line}] Error: Expected ':=' "
+                    f"or '(' after identifier '{self.peek().lexeme}'"
+                )
+        else:
+            raise SyntaxError("Oh shit, :/")
 
     def stmts(self):
         statements: list[Stmt] = []
