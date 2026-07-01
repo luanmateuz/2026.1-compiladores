@@ -1,0 +1,6 @@
+var a int := 10;
+var b int := 5;
+var c int := (a + b) * 2 - 8 / 2;
+
+puts(c);
+puts(26);

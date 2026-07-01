@@ -1,0 +1,6 @@
+var a flt := 5.5;
+var b flt := 2.0;
+
+var resultado flt := (a * b) + (10.0 / 4.0) - 1.5;
+
+puts(resultado);

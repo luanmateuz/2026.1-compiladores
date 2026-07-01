@@ -1,0 +1,24 @@
+var i int := 1;
+var acumulador int := 0;
+
+for(i; i <= 10; i := i + 1) {
+
+    acumulador := acumulador + (i * i);
+
+    if (acumulador > 20) {
+
+        if (acumulador < 100) {
+            puts(acumulador);
+        } else {
+
+            if (acumulador == 140) {
+                puts(999);
+            } else {
+                puts(888);
+            }
+
+        }
+
+    }
+
+}
