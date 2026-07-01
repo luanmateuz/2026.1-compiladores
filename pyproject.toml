@@ -1,10 +1,11 @@
 [project]
 name = "fucklang"
-version = "0.1.1"
-description = "Add your description here"
+version = "0.1.2"
+description = "fucklang compiler"
 readme = "README.md"
 authors = [
     { email = "luanmateuzz@gmail.com" }
+    { email = "williamsoaresporto2@gmail.com" }
 ]
 requires-python = ">=3.13"
 dependencies = []
