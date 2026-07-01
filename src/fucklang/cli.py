@@ -1,5 +1,6 @@
 import argparse
 from importlib import metadata
+from pathlib import Path
 
 from fucklang.codegen import CodeGenerator
 from fucklang.lexer import Lexer
@@ -9,82 +10,123 @@ from fucklang.symbol import SemanticAnalyzer
 PKG_VERSION = metadata.version("fucklang")
 
 
-def flag_lexer(code: str) -> None:
-    try:
-        tokens = Lexer(code).tokenize()
+def write_output(
+    sam: list[str], filename: str, output: str | None = None
+) -> None:
+    if output is None:
+        output = str(Path(filename).with_suffix(".sam"))
 
-        for t in tokens:
-            print(t)
-    except SyntaxError as err:
-        print(err)
+    with open(output, "w", encoding="utf-8") as file:
+        file.write("\n".join(sam))
 
-
-def flag_parser(code: str) -> None:
-    try:
-        tokens = Lexer(code).tokenize()
-        ast = Parser(tokens).parse()
-        print(ast)
-    except SyntaxError as err:
-        print(err)
-
-
-def flag_symbol_table(code: str) -> None:
-    try:
-        tokens = Lexer(code).tokenize()
-        ast = Parser(tokens).parse()
-        symbol = SemanticAnalyzer().analyze(ast)
-        for idx in symbol.symbols:
-            print(f"{idx}: {symbol.symbols[idx]}")
-    except SyntaxError as err:
-        print(err)
-
-
-def flag_dry_run(code: str) -> None:
-    try:
-        tokens = Lexer(code).tokenize()
-        ast = Parser(tokens).parse()
-        symbol = SemanticAnalyzer().analyze(ast)
-        code = CodeGenerator(symbol).build(ast)
-        print("\n".join(code))
-    except SyntaxError as err:
-        print(err)
+    print(f"It's done '{output}'")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="fucklang", description="fucklang cli"
+        prog="fucklang",
+        description="fucklang compiler",
+        add_help=False,
     )
-    parser.add_argument("filename", help="<filename.fk>")
+
     parser.add_argument(
-        "-v", "--version", action="version", version=f"%(prog)s {PKG_VERSION}"
+        "filename",
+        metavar="FILE",
+        help="Source file (.fk)",
     )
-    parser.add_argument("-l", "--lexer", action="store_true")
-    parser.add_argument("-p", "--parser", action="store_true")
-    parser.add_argument("-s", "--symbol", action="store_true")
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {PKG_VERSION}",
+        help="Print fucklang version",
+    )
+
+    parser.add_argument(
+        "-l",
+        "--lexer",
+        action="store_true",
+        help="Print lexer tokens",
+    )
+
+    parser.add_argument(
+        "-p",
+        "--parser",
+        action="store_true",
+        help="Print parser AST",
+    )
+
+    parser.add_argument(
+        "-s",
+        "--symbol",
+        action="store_true",
+        help="Print symbol table",
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print generated SaM without writing a file",
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Output SaM file",
+    )
 
     args = parser.parse_args()
 
-    if args.filename is None:
-        raise SystemExit("Usage: fucklang <filename.fk>")
+    if not args.filename.endswith(".fk"):
+        raise SystemExit(f"error: '{args.filename}' is not a .fk file")
 
-    if not args.filename.endswith("fk"):
-        raise SystemExit(f"{args.filename} is not FUCK file!")
+    try:
+        with open(args.filename, encoding="utf-8") as file:
+            source = file.read()
 
-    with open(args.filename) as file:
-        code = file.read()
+        tokens = Lexer(source).tokenize()
 
         if args.lexer:
-            flag_lexer(code)
+            for token in tokens:
+                print(token)
+
+        ast = Parser(tokens).parse()
 
         if args.parser:
-            flag_parser(code)
+            print(ast)
+
+        symbol_table = SemanticAnalyzer().analyze(ast)
 
         if args.symbol:
-            flag_symbol_table(code)
+            for name, symbol in symbol_table.symbols.items():
+                print(f"{name}: {symbol}")
+
+        sam = CodeGenerator(symbol_table).build(ast)
 
         if args.dry_run:
-            flag_dry_run(code)
+            print("\n".join(sam))
+        else:
+            write_output(
+                sam,
+                filename=args.filename,
+                output=args.output,
+            )
+
+    except FileNotFoundError:
+        raise SystemExit(f"error: file '{args.filename}' not found")
+
+    except PermissionError:
+        raise SystemExit(f"error: permission denied: '{args.filename}'")
+
+    except SyntaxError as err:
+        raise SystemExit(err)
 
 
 if __name__ == "__main__":
