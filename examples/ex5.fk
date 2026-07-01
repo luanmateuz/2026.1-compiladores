@@ -1,9 +1,11 @@
-puts((5 < 10) && (8 > 2));
-puts((5 > 10) || (8 > 2));
-puts(!(5 == 5));
-puts((5 != 6) && !(3 > 10));
+var logical_op01 boo := (5 < 10) && (8 > 2);
+puts(logical_op01); # true (0)
 
-#true
-#true
-#false
-#true
+var logical_op02 boo := (5 > 10) || (8 > 2);
+puts(logical_op02); # true (1)
+
+var logical_op03 boo := !(5 == 5);
+puts(logical_op03); # false (0)
+
+var logical_op04 boo := (5 != 6) && !(3 > 10);
+puts(logical_op04); # true (1)

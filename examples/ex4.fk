@@ -1,24 +1,12 @@
 var i int := 1;
-var acumulador int := 0;
 
-for(i; i <= 10; i := i + 1) {
-
-    acumulador := acumulador + (i * i);
-
-    if (acumulador > 20) {
-
-        if (acumulador < 100) {
-            puts(acumulador);
-        } else {
-
-            if (acumulador == 140) {
-                puts(999);
-            } else {
-                puts(888);
-            }
-
-        }
-
+# for as while
+for(; i <= 10;) {
+    if (i % 2 == 0) {
+        puts('0'); # character '0'
+    } else {
+        puts('1'); # character '1'
     }
 
+    i := i + 1;
 }

@@ -1,20 +1,15 @@
-var valor int := 25;
+var value_number int := 25;
 
-if (valor > 10) {
-
-    if (valor > 20) {
-
-        if (valor == 25) {
+if (value_number > 10) {
+    if (value_number > 20) {
+        if (value_number == 25) {
             puts(1);
         } else {
             puts(2);
         }
-
     } else {
         puts(3);
     }
-
 } else {
     puts(4);
 }
-puts(1);
