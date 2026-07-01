@@ -131,8 +131,12 @@ class CodeGenerator:
     def unary_op(self, node: UnaryOp):
         self.visit(node.operand)
         if node.op.type == TokenType.MINUS:
-            self.sam_code.append("PUSHIMM -1")
-            self.sam_code.append("TIMES")
+            if isinstance(node.operand, Float):
+                self.sam_code.append("PUSHIMMF -1.0")
+                self.sam_code.append("TIMESF")
+            else:
+                self.sam_code.append("PUSHIMM -1")
+                self.sam_code.append("TIMES")
         elif node.op.type == TokenType.NOT:
             # ISNIL: This is equivalent to the NOT instruction
             self.sam_code.append("ISNIL")
@@ -141,14 +145,28 @@ class CodeGenerator:
         self.visit(node.left)
         self.visit(node.right)
 
+        is_float = isinstance(node.left, Float)
+
         if node.op.type == TokenType.PLUS:
-            self.sam_code.append("ADD")
+            if is_float:
+                self.sam_code.append("ADDF")
+            else:
+                self.sam_code.append("ADD")
         elif node.op.type == TokenType.MINUS:
-            self.sam_code.append("SUB")
+            if is_float:
+                self.sam_code.append("SUBF")
+            else:
+                self.sam_code.append("SUB")
         elif node.op.type == TokenType.ASTERISK:
-            self.sam_code.append("TIMES")
+            if is_float:
+                self.sam_code.append("TIMESF")
+            else:
+                self.sam_code.append("TIMES")
         elif node.op.type == TokenType.SLASH:
-            self.sam_code.append("DIV")
+            if is_float:
+                self.sam_code.append("DIVF")
+            else:
+                self.sam_code.append("DIV")
         elif node.op.type == TokenType.MOD:
             self.sam_code.append("MOD")
         elif node.op.type == TokenType.GT:
