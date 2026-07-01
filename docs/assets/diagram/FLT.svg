@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="327" height="53">
+   <defs>
+      <style type="text/css">
+    @namespace "http://www.w3.org/2000/svg";
+    .line                 {fill: none; stroke: #211E1E; stroke-width: 1;}
+    .bold-line            {stroke: #0B0A0A; shape-rendering: crispEdges; stroke-width: 2;}
+    .thin-line            {stroke: #100F0F; shape-rendering: crispEdges}
+    .filled               {fill: #211E1E; stroke: none;}
+    text.terminal         {font-family: Verdana, Sans-serif;
+                            font-size: 12px;
+                            fill: #0B0A0A;
+                            font-weight: bold;
+                          }
+    text.nonterminal      {font-family: Verdana, Sans-serif;
+                            font-size: 12px;
+                            fill: #0D0C0C;
+                            font-weight: normal;
+                          }
+    text.regexp           {font-family: Verdana, Sans-serif;
+                            font-size: 12px;
+                            fill: #100F0F;
+                            font-weight: normal;
+                          }
+    rect, circle, polygon {fill: #211E1E; stroke: #211E1E;}
+    rect.terminal         {fill: #D1CDCC; stroke: #211E1E; stroke-width: 1;}
+    rect.nonterminal      {fill: #E6E4E3; stroke: #211E1E; stroke-width: 1;}
+    rect.text             {fill: none; stroke: none;}
+    polygon.regexp        {fill: #F1EFEF; stroke: #211E1E; stroke-width: 1;}
+  </style>
+   </defs>
+   <polygon points="9 33 1 29 1 37"/>
+   <polygon points="17 33 9 29 9 37"/>
+   <polygon points="51 35 58 19 106 19 113 35 106 51 58 51"/>
+   <polygon points="49 33 56 17 104 17 111 33 104 49 56 49" class="regexp"/>
+   <text class="regexp" x="64" y="37">[0-9]</text>
+   <rect x="153" y="19" width="24" height="32" rx="10"/>
+   <rect x="151"
+         y="17"
+         width="24"
+         height="32"
+         class="terminal"
+         rx="10"/>
+   <text class="terminal" x="161" y="37">.</text>
+   <polygon points="217 35 224 19 272 19 279 35 272 51 224 51"/>
+   <polygon points="215 33 222 17 270 17 277 33 270 49 222 49" class="regexp"/>
+   <text class="regexp" x="230" y="37">[0-9]</text>
+   <path class="line"
+         d="m17 33 h2 m20 0 h10 m62 0 h10 m-102 0 l20 0 m-1 0 q-9 0 -9 -10 l0 -12 q0 -10 10 -10 m82 32 l20 0 m-20 0 q10 0 10 -10 l0 -12 q0 -10 -10 -10 m-82 0 h10 m0 0 h72 m20 32 h10 m24 0 h10 m20 0 h10 m62 0 h10 m-102 0 l20 0 m-1 0 q-9 0 -9 -10 l0 -12 q0 -10 10 -10 m82 32 l20 0 m-20 0 q10 0 10 -10 l0 -12 q0 -10 -10 -10 m-82 0 h10 m0 0 h72 m23 32 h-3"/>
+   <polygon points="317 33 325 29 325 37"/>
+   <polygon points="317 33 309 29 309 37"/>
+</svg>
