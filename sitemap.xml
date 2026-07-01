@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>http://github.com/luanmateuz/2026.1-compiladores/</loc>
+        <lastmod>2026-07-01</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="pt-BR" href="http://github.com/luanmateuz/2026.1-compiladores/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="http://github.com/luanmateuz/2026.1-compiladores/en/"/>
+    </url>
+    <url>
+        <loc>http://github.com/luanmateuz/2026.1-compiladores/grammar/</loc>
+        <lastmod>2026-07-01</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="pt-BR" href="http://github.com/luanmateuz/2026.1-compiladores/grammar/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="http://github.com/luanmateuz/2026.1-compiladores/en/grammar/"/>
+    </url>
+    <url>
+        <loc>http://github.com/luanmateuz/2026.1-compiladores/syntax/</loc>
+        <lastmod>2026-07-01</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="pt-BR" href="http://github.com/luanmateuz/2026.1-compiladores/syntax/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="http://github.com/luanmateuz/2026.1-compiladores/en/syntax/"/>
+    </url>
+    <url>
+        <loc>http://github.com/luanmateuz/2026.1-compiladores/en/</loc>
+        <lastmod>2026-07-01</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="http://github.com/luanmateuz/2026.1-compiladores/en/"/>
+        <xhtml:link rel="alternate" hreflang="pt-BR" href="http://github.com/luanmateuz/2026.1-compiladores/"/>
+    </url>
+    <url>
+        <loc>http://github.com/luanmateuz/2026.1-compiladores/en/grammar/</loc>
+        <lastmod>2026-07-01</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="http://github.com/luanmateuz/2026.1-compiladores/en/grammar/"/>
+        <xhtml:link rel="alternate" hreflang="pt-BR" href="http://github.com/luanmateuz/2026.1-compiladores/grammar/"/>
+    </url>
+    <url>
+        <loc>http://github.com/luanmateuz/2026.1-compiladores/en/syntax/</loc>
+        <lastmod>2026-07-01</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="http://github.com/luanmateuz/2026.1-compiladores/en/syntax/"/>
+        <xhtml:link rel="alternate" hreflang="pt-BR" href="http://github.com/luanmateuz/2026.1-compiladores/syntax/"/>
+    </url>
+</urlset>
